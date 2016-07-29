@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">MrRadio</string>
+    <string name="action_settings">Settings</string>
+    <string name="icon_play">&#xf04b;</string>
+    <string name="icon_pause">&#xf04c;</string>
+    <string name="icon_stop">&#xf04d;</string>
+</resources>
