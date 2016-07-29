@@ -18,9 +18,9 @@ import android.widget.TextView;
 
 import java.io.IOException;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements RadioPlayer.StatusChangeListener {
 
-    private MediaPlayer mediaPlayer;
+    private RadioPlayer radioPlayer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,47 +31,50 @@ public class MainActivity extends AppCompatActivity {
 
         setPlayerButtons();
         createPlayer();
-        startPlaying(new Station(1, "SomaFM: GrooveSalad", "http://ice1.somafm.com/groovesalad-128-mp3"));
+        radioPlayer.play(new Station(1, "SomaFM: GrooveSalad", new Uri[] {
+                Uri.parse("http://ice1.somafm.com/groovesalad-128-mp3")
+        }));
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
+        if (fab != null) {
+            fab.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+                            .setAction("Action", null).show();
+                }
+            });
+        }
     }
 
     private void createPlayer() {
-        mediaPlayer = new MediaPlayer();
-        mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-        mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-            @Override
-            public void onPrepared(MediaPlayer mp) {
-                mp.start();
-                ((Button)findViewById(R.id.play)).setText(R.string.icon_pause);
-            }
-        });
-    }
-
-    private void startPlaying(final Station station) {
-        if (mediaPlayer.isPlaying()) {
-            mediaPlayer.stop();
-        }
-
-        try {
-            mediaPlayer.setDataSource(this, Uri.parse(station.getUrl()));
-            mediaPlayer.prepareAsync();
-            ((TextView)findViewById(R.id.station_title)).setText(station.getTitle());
-        } catch (IOException e) {
-        }
+        radioPlayer = new RadioPlayer(this);
+        radioPlayer.setStatusChangeListener(this);
     }
 
     private void setPlayerButtons() {
         Typeface font = Typeface.createFromAsset( getAssets(), "fontawesome-webfont.ttf" );
-        ((Button)findViewById(R.id.play)).setTypeface(font);
-        ((Button)findViewById(R.id.stop)).setTypeface(font);
+        final Button play = (Button) findViewById(R.id.play);
+        if (play != null) {
+            play.setTypeface(font);
+            play.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    radioPlayer.pause();
+                }
+            });
+        }
+
+        final Button stop = (Button) findViewById(R.id.stop);
+        if (stop != null) {
+            stop.setTypeface(font);
+            stop.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    radioPlayer.stop();
+                }
+            });
+        }
     }
 
     @Override
@@ -94,5 +97,24 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onChanged(RadioPlayer.Status status) {
+        final Button play = (Button) findViewById(R.id.play);
+
+        if (play != null) {
+            switch (status) {
+                case STOPPED:
+                    play.setText(R.string.icon_play);
+                    break;
+                case PLAYING:
+                    play.setText(R.string.icon_pause);
+                    break;
+                case PAUSED:
+                    play.setText(R.string.icon_play);
+                    break;
+            }
+        }
     }
 }
